@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GitHub Variable Reader</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f6f8fa; margin: 2em; }
+        .section { background: #fff; padding: 1em; margin-bottom: 2em; border-radius: 8px; box-shadow: 0 1px 4px #ccc; }
+        label { display: block; margin: 0.5em 0; }
+        input[type="text"], input[type="password"] { width: 350px; padding: 0.3em; }
+        button { padding: 0.5em 1em; }
+    </style>
+</head>
+<body>
+    <h1>GitHub Variable Reader</h1>
+    <div class="section">
+        <h2>GitHub Setup</h2>
+        <label>Repo Owner: <input id="owner" value="Discordbot301" placeholder="Your GitHub username"></label>
+        <label>Repo Name: <input id="repo" value="github-var-reader" placeholder="Repo name"></label>
+        <label>File Name: <input id="file" value="vars.json"></label>
+        <label>GitHub Token: <input id="token" type="password" autocomplete="off"></label>
+    </div>
+    <div class="section">
+        <h2>Access</h2>
+        <label>Password: <input id="accesspw" type="password" autocomplete="off" placeholder="Site access password"></label>
+    </div>
+    <div class="section">
+        <h2>Read Variable</h2>
+        <label>Variable Name: <input id="varname" type="text" placeholder="e.g. NoodlePassword"></label>
+        <button onclick="readVar()">Read</button>
+        <div id="result"></div>
+    </div>
+    <script>
+        const correctPassword = "NoodleHateBurb123!#$";
+        async function githubApi(method, url, token) {
+            const headers = {
+                "Authorization": "token " + token,
+                "Accept": "application/vnd.github.v3+json"
+            };
+            const resp = await fetch(url, { method, headers });
+            return resp.json();
+        }
+        async function readVar() {
+            const owner = document.getElementById('owner').value.trim();
+            const repo = document.getElementById('repo').value.trim();
+            const file = document.getElementById('file').value.trim();
+            const token = document.getElementById('token').value.trim();
+            const password = document.getElementById('accesspw').value;
+            const varname = document.getElementById('varname').value.trim();
+            if (!owner || !repo || !file || !token || !password) {
+                document.getElementById('result').textContent = "Please fill in all fields.";
+                return;
+            }
+            if (password !== correctPassword) {
+                document.getElementById('result').textContent = "Incorrect password.";
+                return;
+            }
+            const apiurl = `https://api.github.com/repos/${owner}/${repo}/contents/${file}`;
+            try {
+                const res = await githubApi("GET", apiurl, token);
+                if (res && res.content) {
+                    const contentObj = JSON.parse(atob(res.content));
+                    document.getElementById('result').textContent =
+                        (varname in contentObj) ?
+                        `${varname}: ${contentObj[varname]}` :
+                        "Variable not found.";
+                } else {
+                    document.getElementById('result').textContent = "File not found or access denied.";
+                }
+            } catch (e) {
+                document.getElementById('result').textContent = "Error reading variable.";
+            }
+        }
+    </script>
+</body>
+</html>
